@@ -9,6 +9,9 @@ import com.example.authenticationservice.repositories.UserRepository;
 import com.example.authenticationservice.services.UserService;
 import com.example.authenticationservice.utils.EmailUtils;
 import com.example.authenticationservice.utils.OtpUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -19,8 +22,11 @@ import java.util.Optional;
 
 import static com.example.authenticationservice.common.constant.ExceptionMessage.*;
 
+@Slf4j
 @Service
 public class UserServiceImpl implements UserService{
+
+    private final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
     @Autowired
     private UserRepository userDetailsRepository;
@@ -39,6 +45,7 @@ public class UserServiceImpl implements UserService{
             String emailId = userRequestDto.getEmailId();
             emailUtils.sendOtpToMail(emailId,otp);
         }catch (Exception exception){
+            logger.error("UserRegistration : unable to send OTP : {}",exception.getMessage());
             throw new UserServiceException(UNABLE_TO_SEND_OTP,HttpStatus.BAD_REQUEST);
         }
 
@@ -68,6 +75,7 @@ public class UserServiceImpl implements UserService{
         BaseResponse baseResponse = new BaseResponse();
         Optional<UserInfo> userInfoOptional = userDetailsRepository.findByEmailId(emailId);
         if(userInfoOptional.isEmpty()){
+            logger.error("verifyAccount : User not found : ");
             throw new UserServiceException(USER_NOT_FOUND,HttpStatus.NOT_FOUND);
         }
         UserInfo userInfo = userInfoOptional.get();
@@ -92,6 +100,7 @@ public class UserServiceImpl implements UserService{
         BaseResponse baseResponse = new BaseResponse();
         Optional<UserInfo> userInfoOptional = userDetailsRepository.findByEmailId(emailId);
         if(userInfoOptional.isEmpty()){
+            logger.error("regenerateOtp : User not found : ");
             throw new UserServiceException(USER_NOT_FOUND,HttpStatus.NOT_FOUND);
         }
         UserInfo userInfo = userInfoOptional.get();
@@ -99,6 +108,7 @@ public class UserServiceImpl implements UserService{
         try{
             emailUtils.sendOtpToMail(emailId,otp);
         }catch (Exception exception){
+            logger.error("regenerateOtp : unable to send OTP : {}",exception.getMessage());
             throw new UserServiceException(UNABLE_TO_SEND_OTP,HttpStatus.BAD_REQUEST);
         }
         userInfo.setOtp(otp);
@@ -115,6 +125,7 @@ public class UserServiceImpl implements UserService{
         String emailId = userLoginRequest.getEmailId();
         Optional<UserInfo> userInfoOptional = userDetailsRepository.findByEmailId(emailId);
         if(userInfoOptional.isEmpty()){
+            logger.error("userLogin : User not found : ");
             throw new UserServiceException(USER_NOT_FOUND,HttpStatus.NOT_FOUND);
         }
         UserInfo userInfo = userInfoOptional.get();
